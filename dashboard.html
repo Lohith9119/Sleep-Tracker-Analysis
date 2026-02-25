@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+sss
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DreamSync - Master Your Sleep Cycle</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+</head>
+<body class="auth-body">
+  <div id="dashboardPage">
+    <div class="container">
+      <!-- Header -->
+      <header>
+        <div class="logo">
+          <div class="logo-icon"><i class="fas fa-moon"></i></div>
+          <div class="logo-text">
+            <h1>DreamSync</h1>
+            <p>Master your sleep cycle</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <div class="theme-toggle" id="toggleDark"><i class="fas fa-moon"></i> Dark Mode</div>
+          <div class="profile-menu" id="profileMenuBtn">
+            <div class="profile-icon">
+              <i class="fas fa-user"></i>
+              <span class="notification-badge" id="notificationBadge"></span>
+            </div>
+            <div class="dropdown-menu" id="profileDropdown">
+              <div class="dropdown-item" onclick="showPage('notifications')">
+                <i class="fas fa-bell"></i> Notification Center
+                <span class="notification-badge" id="dropdownNotificationBadge"></span>
+              </div>
+              <div class="dropdown-item" onclick="showPage('personal-details')"><i class="fas fa-user-circle"></i> Personal Details</div>
+              <div class="dropdown-item" onclick="showPage('weekly-report')"><i class="fas fa-chart-line"></i> Weekly Report</div>
+              <div class="dropdown-item" onclick="showPage('community')"><i class="fas fa-users"></i> Community</div>
+              <div class="dropdown-item" onclick="showPage('sleep-environment')"><i class="fas fa-bed"></i> Sleep Environment</div>
+              <div class="dropdown-item" onclick="showPage('achievements')"><i class="fas fa-trophy"></i> Achievements</div>
+              <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</div>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Main Dashboard -->
+      <main>
+        <div class="dashboard-grid">
+          <!-- Planned Sleep -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title"><i class="fas fa-alarm-clock"></i> Planned Sleep</h2>
+              <span class="badge badge-info" id="planBadge">No plan</span>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="plannedSleep">Bedtime</label>
+                <input type="time" id="plannedSleep" value="22:30">
+              </div>
+              <div class="form-group">
+                <label for="plannedWake">Wake Time</label>
+                <input type="time" id="plannedWake" value="06:30">
+              </div>
+            </div>
+            <p class="info-text">Minimum duration: <b>6h</b>. Reminders will be sent before bedtime.</p>
+            <div class="button-group">
+              <button class="btn btn-primary" id="btnSetPlan"><i class="fas fa-bell"></i> Set Sleep Plan</button>
+              <button class="btn btn-secondary" id="btnClearPlan">Clear</button>
+              <button class="btn btn-secondary" id="btnTestNotif"><i class="fas fa-bell"></i> Test Notification</button>
+            </div>
+            <div id="planInfo" class="info-text hidden"></div>
+          </div>
+
+          <!-- Actual Sleep -->
+          <div class="card">
+            <div class="card-header"><h2 class="card-title"><i class="fas fa-bed"></i> Actual Sleep</h2></div>
+            <div class="form-grid">
+              <div class="form-group"><label for="actualSleep">I fell asleep at</label><input type="time" id="actualSleep"></div>
+              <div class="form-group"><label for="actualWake">I woke up at</label><input type="time" id="actualWake"></div>
+            </div>
+
+            <!-- Sleep Quality Display -->
+            <div class="quality-display hidden" id="qualityDisplay">
+              <div class="quality-score">
+                <span class="score-value" id="qualityScore">85</span>
+                <span class="score-label" id="qualityLabel">Good</span>
+              </div>
+              <div class="quality-breakdown">
+                <div class="quality-factor">
+                  <span class="factor-label">Duration</span>
+                  <div class="factor-bar"><div class="factor-fill" id="durationFill"></div></div>
+                </div>
+                <div class="quality-factor">
+                  <span class="factor-label">Consistency</span>
+                  <div class="factor-bar"><div class="factor-fill" id="consistencyFill"></div></div>
+                </div>
+                <div class="quality-factor">
+                  <span class="factor-label">Environment</span>
+                  <div class="factor-bar"><div class="factor-fill" id="environmentFill"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sleep Notes -->
+            <div class="form-group">
+              <label for="sleepNotes">Notes (optional)</label>
+              <textarea class="sleep-notes" id="sleepNotes" placeholder="How did you sleep? Any dreams? Factors affecting sleep?"></textarea>
+            </div>
+            
+            <div class="button-group">
+              <button class="btn btn-primary" id="btnSaveActual"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sleep Debt Calculator -->
+        <div id="sleepDebtDisplay"></div>
+
+        <!-- White Noise Player -->
+        <div class="white-noise-player"></div>
+
+        <!-- Weekly Stats -->
+        <div class="card weekly-stats">
+          <div class="stats-header">
+            <h2 class="card-title"><i class="fas fa-chart-line"></i> This Week</h2>
+            <span class="badge badge-info" id="weeklyAvg">No data</span>
+            <div class="export-options">
+              <button class="btn btn-secondary" onclick="exportData('csv')"><i class="fas fa-file-csv"></i> CSV</button>
+              <button class="btn btn-secondary" onclick="exportData('json')"><i class="fas fa-file-code"></i> JSON</button>
+            </div>
+          </div>
+          <div class="stats-content">
+            <div class="chart-container"><canvas id="sleepChart"></canvas></div>
+            <div class="table-container">
+              <table class="sleep-table">
+                <thead><tr><th>Date</th><th>Sleep</th><th>Wake</th><th>Duration (hrs)</th><th>Quality</th><th></th></tr></thead>
+                <tbody id="recordsBody"><tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">No sleep records yet</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sleep Environment Summary -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-bed"></i> Sleep Environment</h2>
+          </div>
+          <div class="environment-summary">
+            <div class="environment-stat">
+              <div class="env-icon"><i class="fas fa-volume-up"></i></div>
+              <div class="env-details">
+                <div class="env-value" id="noiseLevel">-- dB</div>
+                <div class="env-label">Noise Level</div>
+              </div>
+            </div>
+            <div class="environment-stat">
+              <div class="env-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="env-details">
+                <div class="env-value" id="lightLevel">-- lux</div>
+                <div class="env-label">Light Level</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 15px;">
+            <button class="btn btn-primary" onclick="showPage('sleep-environment')"><i class="fas fa-chart-bar"></i> View Environment Details</button>
+          </div>
+        </div>
+
+        <!-- Community Stats -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-users"></i> Community Stats</h2>
+          </div>
+          <div class="community-stats">
+            <div class="community-stat">
+              <div class="stat-value" id="communityAvg">7.2h</div>
+              <div class="stat-label">Average Sleep</div>
+            </div>
+            <div class="community-stat">
+              <div class="stat-value" id="communityBest">8.5h</div>
+              <div class="stat-label">Recommended</div>
+            </div>
+            <div class="community-stat">
+              <div class="stat-value" id="communityConsistency">78%</div>
+              <div class="stat-label">Consistency</div>
+            </div>
+          </div>
+          <div style="margin-top: 15px;">
+            <button class="btn btn-primary" onclick="showPage('community')"><i class="fas fa-chart-network"></i> View Community Insights</button>
+          </div>
+        </div>
+      </main>
+      
+      <!-- Footer with Profile Icon -->
+      <footer>
+        <div class="footer-content">
+          <p>&copy; 2023 DreamSync. All rights reserved.</p>
+          <div class="footer-profile" onclick="showPage('personal-details')">
+            <i class="fas fa-user-circle"></i>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Pages: Notifications, Personal Details, Weekly Report, Community -->
+    <div class="page-overlay" id="notifications-page"><div class="page-content"><div class="close-btn" onclick="hidePage('notifications')"><i class="fas fa-times"></i></div><h2 class="page-title"><i class="fas fa-bell"></i> Notification Center</h2><div class="notification-list" id="notificationList"></div></div></div>
+
+    <div class="page-overlay" id="personal-details-page"><div class="page-content"><div class="close-btn" onclick="hidePage('personal-details')"><i class="fas fa-times"></i></div><h2 class="page-title"><i class="fas fa-user-circle"></i> Personal Details</h2><form class="details-form">
+    <div class="form-group"><label for="fullName">Full Name</label><input type="text" id="fullName"></div>
+    <div class="form-group"><label for="email">Email</label><input type="email" id="email"></div>
+    <div class="form-group"><label for="age">Age</label><input type="number" id="age"></div>
+    <div class="form-group"><label for="gender">Gender</label>
+      <select id="gender">
+        <option value="">Select</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group form-full"><label for="address">Address</label><input type="text" id="address"></div>
+    <div class="form-group"><label for="sleepGoal">Sleep Goal (hrs)</label><input type="number" id="sleepGoal" step="0.5" value="7"></div>
+    <div class="form-group"><label for="wakeTimeGoal">Preferred Wake Time</label><input type="time" id="wakeTimeGoal" value="06:30"></div>
+    <div class="details-actions"><button type="button" class="btn btn-secondary" onclick="hidePage('personal-details')">Cancel</button><button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button></div>
+    </form></div></div>
+
+    <div class="page-overlay" id="weekly-report-page"><div class="page-content"><div class="close-btn" onclick="hidePage('weekly-report')"><i class="fas fa-times"></i></div><h2 class="page-title"><i class="fas fa-chart-line"></i> Weekly Report</h2><div id="weeklyReportContent"></div></div></div>
+    
+    <!-- Community Page -->
+    <div class="page-overlay" id="community-page">
+      <div class="page-content">
+        <div class="close-btn" onclick="hidePage('community')"><i class="fas fa-times"></i></div>
+        <h2 class="page-title"><i class="fas fa-users"></i> Sleep Community</h2>
+        <div class="card">
+          <h3>Global Sleep Patterns</h3>
+          <div class="chart-container"><canvas id="communityChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top: 20px;">
+          <h3>Tips from the Community</h3>
+          <div id="communityTips">
+            <div class="notification-item">
+              <div class="notification-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="notification-content">
+                <div class="notification-title">Avoid screens 1 hour before bedtime</div>
+                <div class="notification-time">Recommended by 89% of good sleepers</div>
+              </div>
+            </div>
+            <div class="notification-item">
+              <div class="notification-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="notification-content">
+                <div class="notification-title">Keep your bedroom temperature between 60-67°F (15-19°C)</div>
+                <div class="notification-time">Recommended by 76% of good sleepers</div>
+              </div>
+            </div>
+            <div class="notification-item">
+              <div class="notification-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="notification-content">
+                <div class="notification-title">Establish a consistent sleep schedule</div>
+                <div class="notification-time">Recommended by 94% of good sleepers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements Page -->
+    <div class="page-overlay" id="achievements-page">
+      <div class="page-content">
+        <div class="close-btn" onclick="hidePage('achievements')"><i class="fas fa-times"></i></div>
+        <h2 class="page-title"><i class="fas fa-trophy"></i> Achievements</h2>
+        <div id="achievementsContent"></div>
+      </div>
+    </div>
+    
+    <!-- Sleep Environment Page -->
+    <div class="page-overlay" id="sleep-environment-page">
+      <div class="page-content">
+        <div class="close-btn" onclick="hidePage('sleep-environment')"><i class="fas fa-times"></i></div>
+        <h2 class="page-title"><i class="fas fa-bed"></i> Sleep Environment</h2>
+        
+        <div class="card">
+          <h3>Noise Level Monitoring</h3>
+          <div class="environment-controls">
+            <button class="btn btn-primary" id="startNoiseMonitoring"><i class="fas fa-microphone"></i> Start Monitoring</button>
+            <button class="btn btn-secondary" id="stopNoiseMonitoring" disabled><i class="fas fa-stop"></i> Stop Monitoring</button>
+          </div>
+          <div class="noise-level-display">
+            <div class="noise-meter">
+              <div class="noise-bar">
+                <div class="noise-fill" id="noiseFill"></div>
+              </div>
+              <div class="noise-labels">
+                <span>Quiet</span>
+                <span>Moderate</span>
+                <span>Loud</span>
+              </div>
+            </div>
+            <div class="noise-readings">
+              <div class="noise-reading">
+                <span class="reading-value" id="currentNoise">--</span>
+                <span class="reading-label">Current</span>
+              </div>
+              <div class="noise-reading">
+                <span class="reading-value" id="avgNoise">--</span>
+                <span class="reading-label">Average</span>
+              </div>
+              <div class="noise-reading">
+                <span class="reading-value" id="maxNoise">--</span>
+                <span class="reading-label">Peak</span>
+              </div>
+            </div>
+          </div>
+          <div class="noise-history">
+            <h4>Noise History</h4>
+            <div class="chart-container" style="height: 150px;">
+              <canvas id="noiseChart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card" style="margin-top: 20px;">
+          <h3>Ambient Light Monitoring</h3>
+          <div class="environment-controls">
+            <button class="btn btn-primary" id="startLightMonitoring"><i class="fas fa-lightbulb"></i> Start Monitoring</button>
+            <button class="btn btn-secondary" id="stopLightMonitoring" disabled><i class="fas fa-stop"></i> Stop Monitoring</button>
+          </div>
+          <div class="light-level-display">
+            <div class="light-meter">
+              <div class="light-bar">
+                <div class="light-fill" id="lightFill"></div>
+              </div>
+              <div class="light-labels">
+                <span>Dark</span>
+                <span>Dim</span>
+                <span>Bright</span>
+              </div>
+            </div>
+            <div class="light-readings">
+              <div class="light-reading">
+                <span class="reading-value" id="currentLight">--</span>
+                <span class="reading-label">Current</span>
+              </div>
+              <div class="light-reading">
+                <span class="reading-value" id="avgLight">--</span>
+                <span class="reading-label">Average</span>
+              </div>
+              <div class="light-reading">
+                <span class="reading-value" id="maxLight">--</span>
+                <span class="reading-label">Peak</span>
+              </div>
+            </div>
+          </div>
+          <div class="light-history">
+            <h4>Light History</h4>
+            <div class="chart-container" style="height: 150px;">
+              <canvas id="lightChart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card" style="margin-top: 20px;">
+          <h3>Environment Recommendations</h3>
+          <div id="environmentRecommendations">
+            <div class="recommendation info">
+              <i class="fas fa-info-circle"></i>
+              <p>Ideal sleep environment: 30-50 dB noise level and less than 50 lux light level</p>
+            </div>
+            <div class="recommendation" id="noiseRecommendation">
+              <i class="fas fa-volume-up"></i>
+              <p>Start noise monitoring to get personalized recommendations</p>
+            </div>
+            <div class="recommendation" id="lightRecommendation">
+              <i class="fas fa-lightbulb"></i>
+              <p>Start light monitoring to get personalized recommendations</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
